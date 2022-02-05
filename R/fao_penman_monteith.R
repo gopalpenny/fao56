@@ -60,7 +60,7 @@ get_Ra_daily <- function(lat, date) {#}, Gsc = 0.0820, d_r = NULL, w_s = NULL, p
   } else if (assertthat::is.date(date)) {
     jday <- as.numeric(strftime(date, "%j"))
   } else {
-    jday <- jday
+    jday <- date
   }
   Gsc <- 0.0820 # solar constant
   phi <- get_phi_lat(lat)
@@ -101,7 +101,7 @@ get_d_r <- function(date) {
   } else if (assertthat::is.date(date)) {
     jday <- as.numeric(strftime(date, "%j"))
   } else {
-    jday <- jday
+    jday <- date
   }
   return(1 + 0.033 * cos(2 * pi/ 365 * jday))
 }
@@ -122,7 +122,7 @@ get_delta <- function(date) {
   } else if (assertthat::is.date(date)) {
     jday <- as.numeric(strftime(date, "%j"))
   } else {
-    jday <- jday
+    jday <- date
   }
   return(0.409 * sin(2*pi/365 * jday - 1.39))
 }
@@ -157,9 +157,9 @@ get_w_s_angle <- function(lat,date) {
 #' @examples
 #' lat <- 13.1
 #' date <- "2019-04-15"
-#' w_s <- get_w_s_angle(lat, date)
-#' get_daylight_hours(w_s)
-get_daylight_hours <- function(w_s) {
+#' get_daylight_hours(lat, date)
+get_daylight_hours <- function(lat, date) {
+  w_s <- get_w_s_angle(lat, date)
   N <- 24 / pi * w_s
   return(N)
 }
@@ -188,8 +188,7 @@ get_daylight_hours <- function(w_s) {
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
 #' n <- 220 / 31 # 220 hours in a month / 31 days
-#' w_s <- get_w_s_angle(lat, date)
-#' N <- get_daylight_hours(w_s)
+#' N <- get_daylight_hours(lat, date)
 #' Ra <- get_Ra_daily(lat, date)
 #' Rs <- get_Rs_daily(Ra, n, N)
 get_Rs_daily <- function(Ra, n, N, as = 0.25, bs = 0.5) {
@@ -214,12 +213,11 @@ get_Rs_daily <- function(Ra, n, N, as = 0.25, bs = 0.5) {
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
 #' n <- 220 / 31 # 220 hours in a month / 31 days
-#' w_s <- get_w_s_angle(lat, date)
-#' N <- get_daylight_hours(w_s)
+#' N <- get_daylight_hours(lat, date)
 #' Ra <- get_Ra_daily(lat, date)
 #' Rs <- get_Rs_daily(Ra, n, N)
 #' Rns <- get_Rns_daily(Rs, albedo = 0.23)
-get_Rns_daily <- function(Ra, albedo = 0.23) {
+get_Rns_daily <- function(Rs, albedo = 0.23) {
   Rns <- (1 - albedo) * Rs
   return(Rns)
 }
@@ -240,8 +238,7 @@ get_Rns_daily <- function(Ra, albedo = 0.23) {
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
 #' n <- 220 / 31 # 220 hours in a month / 31 days
-#' w_s <- get_w_s_angle(lat, date)
-#' N <- get_daylight_hours(w_s)
+#' N <- get_daylight_hours(lat, date)
 #' Ra <- get_Ra_daily(lat, date)
 #' Rso <- get_Rso_daily(Ra, z = 100)
 get_Rso_daily <- function(Ra, z) {
@@ -275,8 +272,7 @@ get_Rso_daily <- function(Ra, z) {
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
 #' n <- 220 / 31 # 220 hours in a month / 31 days
-#' w_s <- get_w_s_angle(lat, date)
-#' N <- get_daylight_hours(w_s)
+#' N <- get_daylight_hours(lat, date)
 #' Ra <- get_Ra_daily(lat, date)
 #' Rso <- get_Rso_daily(Ra, z = 100)
 #' Rs <- get_Rs_daily(Ra, n, N)
@@ -327,8 +323,7 @@ get_Rnl_daily <- function(Ra, Tmax_K, Tmin_K, ea, Rs, Rso) {
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
 #' n <- 220 / 31 # 220 hours in a month / 31 days
-#' w_s <- get_w_s_angle(lat, date)
-#' N <- get_daylight_hours(w_s)
+#' N <- get_daylight_hours(lat, date)
 #' Ra <- get_Ra_daily(lat, date)
 #' Rso <- get_Rso_daily(Ra, z = 100)
 #' Rs <- get_Rs_daily(Ra, n, N)

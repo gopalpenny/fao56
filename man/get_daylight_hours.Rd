@@ -4,7 +4,7 @@
 \alias{get_daylight_hours}
 \title{Get daylight hours (Eq. 34)}
 \usage{
-get_daylight_hours(w_s)
+get_daylight_hours(lat, date)
 }
 \arguments{
 \item{w_s}{sunset hour angle (Eq 25)}
@@ -20,6 +20,5 @@ N = 24 / pi * w_s
 \examples{
 lat <- 13.1
 date <- "2019-04-15"
-w_s <- get_w_s_angle(lat, date)
-get_daylight_hours(w_s)
+get_daylight_hours(lat, date)
 }

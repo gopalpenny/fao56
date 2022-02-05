@@ -27,8 +27,7 @@ This function calculates clear-sky shortwave radiation, in MJ/m^2/day. It
 lat <- -22.9 # Rio de Janeiro
 date <- "2019-05-15"
 n <- 220 / 31 # 220 hours in a month / 31 days
-w_s <- get_w_s_angle(lat, date)
-N <- get_daylight_hours(w_s)
+N <- get_daylight_hours(lat, date)
 Ra <- get_Ra_daily(lat, date)
 Rso <- get_Rso_daily(Ra, z = 100)
 }

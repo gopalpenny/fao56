@@ -28,24 +28,24 @@ test_that("read_et0_csv works", {
 lat <- -22.9 # Rio de Janeiro
 date <- "2019-05-15"
 n <- 220 / 31 # 220 hours in a month / 31 days
-w_s <- get_w_s_angle(lat, date)
-N <- get_daylight_hours(w_s)
+N <- get_daylight_hours(lat, date)
 Tmax_K <- 25.1+273.16
 Tmin_K <- 19.1+273.16
 ea <- 2.1
 
 Ra <- get_Ra_daily(lat, date)
 Rs <- get_Rs_daily(Ra, n, N)
-Rso <- get_Rso_daily(Ra, z = 100)
-Rns <- get_Rns_daily(Rs, albedo)
+Rso <- get_Rso_daily(Ra, z = 0)
+Rns <- get_Rns_daily(Rs, albedo = 0.23)
 Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
-Rn <- get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100)
+Rn <- get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 0)
 
 test_that("FAO Penman-Monteith works for daily Ra, Rs, Rso, Rns, Rnl, Rn", {
   expect_equal(round(Ra,5), 25.11103)
   expect_equal(round(Rs,5), 14.4561)
-  expect_equal(round(Rso,5), 18.88349)
+  expect_equal(round(Rso,5), 18.83327)
   expect_equal(round(Rns,5), 11.1312)
-  expect_equal(round(Rnl,5), 3.49445)
-  expect_equal(round(Rn,6), 7.636745)
+  expect_equal(round(Rnl,6), 3.508541)
+  expect_equal(round(Rn,6), 7.622655)
+  expect_equal(round(get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100),6), 7.636745)
 })

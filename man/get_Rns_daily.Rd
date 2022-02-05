@@ -27,8 +27,7 @@ This function calculates net shortwave radiation, in MJ/m^2/day. It
 lat <- -22.9 # Rio de Janeiro
 date <- "2019-05-15"
 n <- 220 / 31 # 220 hours in a month / 31 days
-w_s <- get_w_s_angle(lat, date)
-N <- get_daylight_hours(w_s)
+N <- get_daylight_hours(lat, date)
 Ra <- get_Ra_daily(lat, date)
 Rs <- get_Rs_daily(Ra, n, N)
 Rns <- get_Rns_daily(Rs, albedo = 0.23)
