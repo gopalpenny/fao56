@@ -4,7 +4,9 @@
 \name{fao_crop_coefficients}
 \alias{fao_crop_coefficients}
 \title{FAO crop coeffients}
-\format{A \code{tibble} containing the crop coefficients}
+\format{
+A \code{tibble} containing the crop coefficients
+}
 \usage{
 fao_crop_coefficients
 }
