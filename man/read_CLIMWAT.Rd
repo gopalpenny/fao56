@@ -17,8 +17,8 @@ first be extracted from CLIMWAT and saved as .cli and .pen files.
 }
 \examples{
 \dontrun{
-directory_path <- "~/Downloads"
-station_name <- "SRINAGAR"
+directory_path <- "fao56"
+station_name <- "CLIMWAT_example"
 read_CLIMWAT(directory_path,station_name)
 }
 }

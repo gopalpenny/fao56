@@ -10,14 +10,17 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' directory_path <- "~/Downloads"
-#' station_name <- "SRINAGAR"
+#' directory_path <- "fao56"
+#' station_name <- "CLIMWAT_example"
 #' read_CLIMWAT(directory_path,station_name)
 #' }
 read_CLIMWAT <- function(directory_path,station_name) {
   rainfall_effective <- rainfall <- ref_ET_cli <- ref_ET_pen <- rainfall_check <- ET_check <- NULL
 
-
+  if (directory_path=="fao56" & station_name=="CLIMWAT_example") {
+    pen_filepath <- system.file("extdata", "CLIMWAT_example.pen", package = "fao56")
+    directory_path <- gsub(paste0("\\/","CLIMWAT_example.pen"),"",pen_filepath)
+  }
 
   cli_path <- file.path(directory_path,paste0(station_name,".cli"))
   pen_path <- file.path(directory_path,paste0(station_name,".pen"))

@@ -26,7 +26,8 @@ fao_crop_stages[1:10,] %>% knitr::kable("html",linesep="",align = "l") %>% kable
 ```
 
 ```{r message=FALSE}
-climwat <- read_CLIMWAT(directory_path="~/Downloads",station_name="SRINAGAR")
+# with read_CLIMWAT, set directory_path="fao56",station_name="CLIMWAT_example" to get example files
+climwat <- read_CLIMWAT(directory_path="fao56",station_name="CLIMWAT_example")
 climwat$meta %>% knitr::kable()
 climwat$climate %>% knitr::kable('html') %>% kableExtra::kable_styling(font_size=8)
 ```
