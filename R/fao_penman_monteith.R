@@ -2,27 +2,22 @@
 #
 # library(tidyverse)
 
-#' Pipe-friendly gsub
-ggsub <- function(x, pattern, replacement) {
-  return(gsub(pattern, replacement, x))
-}
-
 #' Read ET0 CSV
-#' @param path Path to ET0 csv file
+#' @param et0_path Path to ET0 csv file
 #' @export
 #' @examples
 #' # Locate the path of the example et0 csv file
-#' et0_path <- system.file("extdata", "ET0 - 20.59-78.96.csv", package = "fao56")
+#' et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
 #'
 #' # Read the file
 #' et0 <- read_et0_csv(et0_path)
-read_et0_csv <- function(path) {
-  et0_vars <- readr::read_csv(path, skip = 1, n_max = 1, col_names = FALSE) %>%
+read_et0_csv <- function(et0_path) {
+  et0_vars <- readr::read_csv(et0_path, skip = 1, n_max = 1, col_names = FALSE) %>%
     as.character() %>% ggsub("\\.","") %>% ggsub("Prc","precip")
-  et0_units <- readr::read_csv(path, skip = 2, n_max = 1, col_names = FALSE) %>%
-    as.character() %>% ggsub("\\%","pct") %>% ggsub("°","deg")
+  et0_units <- readr::read_csv(et0_path, skip = 2, n_max = 1, col_names = FALSE) %>%
+    as.character() %>% ggsub("\\%","pct") %>% ggsub(".C$","degC") #ggsub("°","deg")
   et0_colnames <- paste(et0_vars, et0_units, sep = "_")
-  et0_data <- readr::read_csv(path, skip = 3, col_names = et0_colnames)
+  et0_data <- readr::read_csv(et0_path, skip = 3, col_names = et0_colnames)
 
   return(et0_data)
 }

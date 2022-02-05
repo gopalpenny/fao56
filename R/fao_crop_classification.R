@@ -16,6 +16,8 @@
 #' crop_classes <- crop_classification$crop_classes
 #' botanical_names <- crop_classification$botanical_names
 get_crop_classes <- function() {
+  Group <- Class <- Subclass <- . <- NULL
+
   message("Getting FAO crop categories from\n",
           "https://www.fao.org/3/a0135e/A0135E10.htm \n",
           "on",paste(Sys.time()),"\n")
@@ -27,8 +29,8 @@ get_crop_classes <- function() {
 
   crop_classes_all <- all_tables[1] %>% rvest::html_table(fill=TRUE)
   crop_classes_init <- crop_classes_all[[1]] %>% tibble::as_tibble() %>%
-    dplyr::select(-dplyr::all_of(c("X5","X6"))) %>% setNames(dplyr::slice(.,1)) %>% # remove first "Crop" column, set header from 1st row
-    setNames(gsub("Crop type1","Crop type",names(.))) %>%
+    dplyr::select(-dplyr::all_of(c("X5","X6"))) %>% stats::setNames(dplyr::slice(.,1)) %>% # remove first "Crop" column, set header from 1st row
+    stats::setNames(gsub("Crop type1","Crop type",names(.))) %>%
     dplyr::filter(dplyr::row_number()!=1) %>% # remove first row (containing headers)
     dplyr::mutate(dplyr::across(dplyr::everything(), function(x) dplyr::if_else(x == "", as.character(NA), x)))
 
@@ -37,20 +39,23 @@ get_crop_classes <- function() {
   crop_groups$Group_name <- crop_groups$Title
   crop_groups <- crop_groups %>%
     dplyr::select(-dplyr::all_of(c("Class","Sub-class","Order","Title")))
+  names(crop_classes_init) <- gsub("Sub-class","Subclass",names(crop_classes_init))
   crop_classes_filled <- crop_classes_init %>%
     tidyr::fill(Group) %>%
     dplyr::group_by(Group) %>%
     tidyr::fill(Class) %>%
     dplyr::group_by(Class) %>%
-    tidyr::fill(`Sub-class`) %>%
-    dplyr::group_by(`Sub-class`) %>%
+    tidyr::fill(`Subclass`) %>%
+    dplyr::group_by(`Subclass`) %>%
     dplyr::filter(Class != "") %>%
     dplyr::left_join(crop_groups[,c("Group","Group_name")], by = "Group")
+  names(crop_classes_init) <- gsub("Subclass","Sub-class",names(crop_classes_init))
 
   botanical_names_all <- all_tables[2] %>% rvest::html_table(fill=TRUE)
   botanical_names_init <- botanical_names_all[[1]] %>% tibble::as_tibble() %>%
-    setNames(dplyr::slice(.,1)) %>%
-    dplyr::filter(dplyr::row_number()!=1, `Botanical name` != "") # remove first row (containing headers)
+    stats::setNames(dplyr::slice(.,1))
+  botanical_names_init <- botanical_names_init %>%
+    dplyr::filter(dplyr::row_number()!=1, botanical_names_init$`Botanical name` != "") # remove first row (containing headers)
 
   return(list(crop_classes=crop_classes_filled,botanical_names=botanical_names_init))
 }

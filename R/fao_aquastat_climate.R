@@ -12,7 +12,7 @@ get_aquastat_climate <- function(lat, lon) {
   aq_url <- gsub("LATITUDE", lat, aq_url_ORIG)
   aq_url <- gsub("LONGITUDE", lon, aq_url)
 
-  browseURL(aq_url)
+  utils::browseURL(aq_url)
 
   # Old stuff trying to scrape data
   # This does not seem to be working. I don't fully know why but it's possible that the

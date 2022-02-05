@@ -4,17 +4,17 @@
 \alias{read_et0_csv}
 \title{Read ET0 CSV}
 \usage{
-read_et0_csv(path)
+read_et0_csv(et0_path)
 }
 \arguments{
-\item{path}{Path to ET0 csv file}
+\item{et0_path}{Path to ET0 csv file}
 }
 \description{
 Read ET0 CSV
 }
 \examples{
 # Locate the path of the example et0 csv file
-et0_path <- system.file("extdata", "ET0 - 20.59-78.96.csv", package = "fao56")
+et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
 
 # Read the file
 et0 <- read_et0_csv(et0_path)
