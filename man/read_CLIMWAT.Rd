@@ -16,7 +16,9 @@ Import CLIMWAT data from .cli and .pen files. Note that the files must
 first be extracted from CLIMWAT and saved as .cli and .pen files.
 }
 \examples{
+\dontrun{
 directory_path <- "~/Downloads"
 station_name <- "SRINAGAR"
 read_CLIMWAT(directory_path,station_name)
+}
 }

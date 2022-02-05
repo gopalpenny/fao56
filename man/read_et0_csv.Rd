@@ -13,7 +13,9 @@ read_et0_csv(path)
 Read ET0 CSV
 }
 \examples{
-et0_path <- "ET0 - 20.59-78.96.csv"
+# Locate the path of the example et0 csv file
+et0_path <- system.file("extdata", "ET0 - 20.59-78.96.csv", package = "fao56")
+
+# Read the file
 et0 <- read_et0_csv(et0_path)
-et0
 }

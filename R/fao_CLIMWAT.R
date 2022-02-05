@@ -9,9 +9,11 @@
 #' @importFrom magrittr %>%
 #' @export
 #' @examples
+#' \dontrun{
 #' directory_path <- "~/Downloads"
 #' station_name <- "SRINAGAR"
 #' read_CLIMWAT(directory_path,station_name)
+#' }
 read_CLIMWAT <- function(directory_path,station_name) {
   cli_path <- file.path(directory_path,paste0(station_name,".cli"))
   pen_path <- file.path(directory_path,paste0(station_name,".pen"))
