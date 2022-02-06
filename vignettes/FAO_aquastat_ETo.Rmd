@@ -1,0 +1,59 @@
+---
+title: "FAO aquastat ETo"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FAO_aquastat_ETo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Download FAO climate data
+
+The goal of this vignette is to access and download FAO climate data, then prepare that data to calculate ETo. The methods used in this package `fao56` are pulled from the FAO 56 report on evapotranspiration. Many of the functions correspond directly to an equation in that report.
+
+```{r setup}
+library(fao56)
+library(dplyr)
+```
+
+Let's say we want climate data for Kuala Lumpur, which has the coordinates 3.1390, 101.6869. We first use `get_aquastat_climate()` to visit the those coordinates and seek to download climate data. On the page, click the download CSV button. It also helps to note the elevation, which is 49 m in this case.
+
+```{r eval=FALSE}
+get_aquastat_climate(lat = 3.1390, lon = 101.6869)
+```
+
+Next, move the file to a convenient locaiton. This package already has the file installed under extdata. It can be accessed by finding the location using `system.file()`. The file can then be read using `read_et0_csv()`
+
+```{r}
+kl_path <- system.file("extdata","ET0 - 3.14-101.69.csv", package = "fao56")
+kl_climate <- read_et0_csv(kl_path)
+kl_climate
+```
+
+## Prepare the data for FAO penman monteith
+
+The FAO Penman-Monteith equation requires specific variables to calculate ETo. The function `gen_ETo_predictors_from_aquastat` allows calculation of these variables and the ability to select particular ones. It also calculates ETo in the field `ETo_calc`.
+
+```{r}
+z = 49
+lat = 3.139
+col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC", "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
+ETo_df <- gen_ETo_predictors_from_aquastat(kl_climate, lat = lat, z = z, col_select = col_select) 
+ETo_df
+```
+
+There may be small discrepancies between `ETo_calc` and `ETo_mm_per_d`. These should be small, on the order of 1%. 
+
+```{r}
+ETo_df %>% mutate(pct_error = round(100 * (ETo_calc - ETo_mm_per_d) / ETo_mm_per_d, 1)) %>%
+  dplyr::select(ETo_calc, ETo_mm_per_d, pct_error)
+```
+
+
