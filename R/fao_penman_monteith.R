@@ -530,7 +530,6 @@ get_P_atmosphere <- function(z) {
 #' @param u2 wind speed at 2 m height, m/s
 #' @param es saturation vapor pressure, kPa
 #' @param ea actual vapor pressure, kPa
-#' @param s slope vapor pressure curve, kPa / deg C
 #' @param gamma psychrometric constant, kPa / deg C
 #' @export
 #' @details
@@ -628,27 +627,24 @@ fao_penman_monteith <- function(Rn, G, gamma, T_C, u2, es, ea) {
 
 #' Generate ETo predictors from aquastat data
 #'
-#' @param clim_data \code{data.frame} of monthly climate data in order of Jan-Dec, containing the columns described below
+#' @param clim_data \code{data.frame} of monthly climate data in order of
+#'   Jan-Dec, containing the columns described below
 #' @param lat latitude in decimal degrees
 #' @param z elevation in m
-#' @param col_select character vector specifying which columns to return from the original data
+#' @param col_select character vector specifying which columns to return from
+#'   the original data
 #' @export
-#' @details
-#' \itemize{
-#' \item Rel_Hum_pct
-#' \item Tmp_max_degC
-#' \item Tmp_min_degC
-#' \item Tmp_Mean_degC
-#' \item Sun_shine_pct (0-100)
-#' \item Wind_2m_m_per_s
-#' }
+#' @details \itemize{ \item Rel_Hum_pct \item Tmp_max_degC \item Tmp_min_degC
+#'   \item Tmp_Mean_degC \item Sun_shine_pct (0-100) \item Wind_2m_m_per_s }
 #' @examples
-#' Locate and read the example et0 csv file
+#' # Locate and read the example et0 csv file
 #' et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
-#' col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC", "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
+#' col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC",
+#'     "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
 #' clim_data <- read_et0_csv(et0_path)
-#' ETo_df <- gen_ETo_predictors_from_aquastat(clim_data, lat = 20.59, z = 231, col_select = col_select)
-gen_ETo_predictors_from_aquastat <- function(clim_data, lat, z, col_select = NULL) {
+#' ETo_df <- gen_ETo_vars(clim_data, lat = 20.59, z = 231, col_select = col_select)
+gen_ETo_vars <- function(clim_data, lat, z, col_select = NULL) {
+  month <- NULL
   clim_prep <- clim_data
 
   clim_prep$lat <- lat

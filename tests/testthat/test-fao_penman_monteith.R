@@ -197,7 +197,7 @@ test_that("fao_penman_monteith for reference ETo works for single values",{
 et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
 col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC", "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
 clim_data <- read_et0_csv(et0_path)
-ETo_df <- gen_ETo_predictors_from_aquastat(clim_data, lat = 20.59, z = 231, col_select = col_select) %>%
+ETo_df <- gen_ETo_vars(clim_data, lat = 20.59, z = 231, col_select = col_select) %>%
   dplyr::mutate(dplyr::across(tidyselect::vars_select_helpers$where(is.numeric), function(x) round(x, 4))) #%>% ggp::print_data_frame_for_entry()
 ETo_saved <- tibble::tibble(Rn_MJ_per_day=c(8.198, 10.0156, 11.0713, 12.5548, 13.4567, 12.3951, 10.5665, 10.3673, 11.2813, 10.911, 8.747, 7.6178),
   G_MJ_per_day=c(0.259, 0.49, 0.595, 0.476, -0.042, -0.504, -0.357, -0.035, -0.035, -0.308, -0.42, -0.119),
@@ -208,7 +208,7 @@ ETo_saved <- tibble::tibble(Rn_MJ_per_day=c(8.198, 10.0156, 11.0713, 12.5548, 13
   ETo_calc=c(3.2297, 4.4418, 5.5234, 6.8865, 8.3215, 6.3163, 4.0885, 3.6882, 4.0625, 4.2794, 3.6859, 2.9975),
   ETo_mm_per_d=c(3.3, 4.5, 5.6, 6.9, 8.4, 6.4, 4.2, 3.7, 4.1, 4.3, 3.7, 3.1))
 
-test_that("gen_ETo_predictors_from_aquastat properly pulls predictors", {
+test_that("gen_ETo_vars properly pulls predictors", {
   expect_equal(ETo_saved, ETo_df)
 })
 

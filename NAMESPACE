@@ -2,7 +2,7 @@
 
 export("%>%")
 export(fao_penman_monteith)
-export(gen_ETo_predictors_from_aquastat)
+export(gen_ETo_vars)
 export(get_G_from_monthly_T)
 export(get_Ra_daily)
 export(get_Rn_daily)

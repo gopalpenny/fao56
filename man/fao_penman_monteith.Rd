@@ -20,8 +20,6 @@ fao_penman_monteith(Rn, G, gamma, T_C, u2, es, ea)
 \item{es}{saturation vapor pressure, kPa}
 
 \item{ea}{actual vapor pressure, kPa}
-
-\item{s}{slope vapor pressure curve, kPa / deg C}
 }
 \description{
 FAO Penman Monteith reference ETo
