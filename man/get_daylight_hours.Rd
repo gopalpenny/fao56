@@ -7,7 +7,9 @@
 get_daylight_hours(lat, date)
 }
 \arguments{
-\item{w_s}{sunset hour angle (Eq 25)}
+\item{lat}{latitude in decimal degrees}
+
+\item{date}{date object or numeric jday}
 }
 \description{
 Get daylight hours (Eq. 34)

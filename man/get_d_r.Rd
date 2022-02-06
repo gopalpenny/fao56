@@ -18,6 +18,9 @@ Return inverse relative distance. Evaluates the equation:
 d_r = 1 + 0.033 * cos(2 * pi/ 365 * jday)
 }
 \examples{
+\dontrun{
 get_d_r("2019-04-15")
 get_d_r(105, "\%j")
 }
+}
+\keyword{internal}

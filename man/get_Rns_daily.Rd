@@ -4,12 +4,12 @@
 \alias{get_Rns_daily}
 \title{Get net shortwave radiation (Rs)}
 \usage{
-get_Rns_daily(Ra, albedo = 0.23)
+get_Rns_daily(Rs, albedo = 0.23)
 }
 \arguments{
-\item{albedo}{albedo or canopy reflectance, unitless}
-
 \item{Rs}{downward shortwave radiation, MJ/m^2/day}
+
+\item{albedo}{albedo or canopy reflectance, unitless}
 }
 \description{
 Get net shortwave radiation, Rs (FAO 56, Eq. 38) in MJ/m^2/day

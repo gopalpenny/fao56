@@ -75,25 +75,31 @@ get_Ra_daily <- function(lat, date) {#}, Gsc = 0.0820, d_r = NULL, w_s = NULL, p
 
 #' Get latitude in rad from decimal degrees (Eq. 22)
 #' @param lat latitude in decimal degrees
+#' @keywords internal
 #' @details
 #' Return latitude in rad. Evaluates the equation
 #'
 #' lat * pi / 180
 #' @examples
+#' \dontrun{
 #' phi <- get_phi_lat(13.1)
+#' }
 get_phi_lat <- function(lat) {
   return(lat * pi / 180)
 }
 
 #' Get inverse relative distance Earth-Sun (Eq 23)
 #' @param date date object or numeric jday
+#' @keywords internal
 #' @details
 #' Return inverse relative distance. Evaluates the equation:
 #'
 #' d_r = 1 + 0.033 * cos(2 * pi/ 365 * jday)
 #' @examples
+#' \dontrun{
 #' get_d_r("2019-04-15")
 #' get_d_r(105, "%j")
+#' }
 get_d_r <- function(date) {
   if (is.character(date)) {
     date <- as.Date(date)
@@ -108,13 +114,16 @@ get_d_r <- function(date) {
 
 #' Get solar decimation (Eq 24)
 #' @param date date object or numeric jday
+#' @keywords internal
 #' @details
 #' Return solar decimation in rad. Evaluates the equation:
 #'
 #' delta = 0.409 * sin(2*pi/365 * jday - 1.39)
 #' @examples
+#' \dontrun{
 #' get_delta("2019-04-15")
 #' get_delta(105, "%j")
+#' }
 get_delta <- function(date) {
   if (is.character(date)) {
     date <- as.Date(date)
@@ -129,16 +138,19 @@ get_delta <- function(date) {
 
 
 #' Get sunset hour angle (Eq 25)
-#' @param phi latitude (Equation 22), rad
-#' @param delta solar decimation (Equation 24), rad.
+#' @param lat latitude in decimal degrees
+#' @param date date object or numeric jday
+#' @keywords internal
 #' @details
 #' Return solar decimation in rad. Evaluates the equation:
 #'
 #' w_s = acos(-tan(phi) * tan(delta))
 #' @examples
+#' \dontrun{
 #' lat <- 13.1
 #' date <- "2019-04-15"
 #' w_s <- get_w_s_angle(lat, date)
+#' }
 get_w_s_angle <- function(lat,date) {
   delta <- get_delta(date)
   phi <- get_phi_lat(lat)
@@ -148,7 +160,8 @@ get_w_s_angle <- function(lat,date) {
 
 #' Get daylight hours (Eq. 34)
 #'
-#' @param w_s sunset hour angle (Eq 25)
+#' @param lat latitude in decimal degrees
+#' @param date date object or numeric jday
 #' @export
 #' @details
 #' Return number of daylight hours. Evaluates the equation:
@@ -227,6 +240,7 @@ get_Rns_daily <- function(Rs, albedo = 0.23) {
 #' Get clear sky shortwave radiation, Rso (FAO 56, Eq. 36) in MJ/m^2/day
 #' @param Ra downward shortwave radiation, MJ/m^2/day
 #' @param z elevation above sea level, m
+#' @export
 #' @details This function calculates clear-sky shortwave radiation, in MJ/m^2/day. It
 #'   uses Eq. 37 from FAO 56 in Chapter 3:
 #'
@@ -343,7 +357,130 @@ get_Rn_daily <- function(lat, date, Tmax_K, Tmin_K, ea, n, N, albedo = 0.23, z, 
   return(Rn)
 }
 
+#' Calculate the psychrometric constant
+#'
+#' @param P_kPa Pressure in kPa
+#' @export
+#' @details
+#' Calculates the psychrometric constant as
+#'
+#' gamma = cp * P / (M_water_air * l), org
+#'
+#' gamma = 0.663e-3 P
+#'
+#' gamma psychrometric constant, kPa / deg C,
+#' P atmospheric pressure, kPa
+#' l latent heat of vaporization, 2.45 MJ / kg,
+#' cp specific heat at constant pressure, 1.013e-3, MJ / kg / deg C
+#' M_water_air ratio molecular weight of water vapour/dry air = 0.622.
+#' @examples
+#' get_psychrometric_constant(101.325)
+get_psychrometric_constant <- function(P_kPa = 101.325) {
+  gamma <- 0.663e-3*P_kPa
+  return(gamma)
+}
 
+#' Calculate the saturation vapor pressure in kPa
+#'
+#' @param T_C Temperature in deg C
+#' @export
+#' @details
+#' Calculates the saturation vapor pressure in kPa as a function of temperature (deg C) as
+#'
+#' es = a * exp(b * T_C / (T_C + c1)), where
+#'
+#' a = 0.6108
+#' b = 17.27
+#' c = 237.3
+#'
+#' @examples
+#' get_es(24.5)
+get_es <- function(T_C) {
+  a <- 0.6108
+  b <- 17.27
+  c1 <- 237.3
+  es <- a * exp(b * T_C / (T_C + c1))
+  return(es)
+}
+
+#' Calculate the slope of the saturation vapor pressure curve
+#' culate the slope of the saturation vapor pressure curve in kPa / deg C
+#' @param T_C Temperature in deg C
+#' @export
+#' @details
+#' Calculates the saturation vapor pressure in kPa / deg C as a function of temperature (deg C) as
+#'
+#' s = a * b * c / (T_C + c)^2 * exp(b * T_C / (T_C + c)), where
+#'
+#' a = 0.6108
+#' b = 17.27
+#' c = 237.3
+#'
+#' @examples
+#' get_es_slope(24.5)
+get_es_slope <- function(T_C) {
+  a <- 0.6108
+  b <- 17.27
+  c1 <- 237.3
+  s <- a * b * c1 / (T_C + c1)^2 * exp(b * T_C / (T_C + c1))
+  return(s)
+}
+
+#' Get the ground heat flux in
+#'
+#' @param T_month_iminus1 air temperature at month i-1, deg C
+#' @param T_month_iplus1 air temperature at month i-1, deg C
+#' @param T_month_i air temperature at month i, deg C
+#' @export
+#' @details
+#'
+#' Must specify \code{T_month_iminus1} and either \code{T_month_iplus1} or \code{T_month_i}.
+#' \code{T_month_iplus1} is given preference. The calculation is then either
+#'
+#' G = 0.07 * (T_month_iplus1 - T_month_iminus1), eq 43 FAO 56, Ch 3, or
+#'
+#' G = 0.14 * (T_month_i - T_month_iminus1) # eq 44 FAO 56, Ch 3
+#'
+#' G soil heat flux, MJ / m^2/ day
+#' T_month_iplus1 air temperature at month i+1, deg C
+#' T_month_i air temperature at month i+1, deg C
+#' T_month_iminus1 air temperature at month i-1, deg C
+#' @examples
+#' get_G_from_monthly_T(15, 18)
+#' get_G_from_monthly_T(15, T_month_i = 18)
+get_G_from_monthly_T <- function(T_month_iminus1, T_month_iplus1 = NULL, T_month_i = NULL) {
+  if (!is.null(T_month_iplus1)) {
+    G <- 0.07 * (T_month_iplus1 - T_month_iminus1) # eq 43 FAO 56, Ch 3
+  } else if (!is.null(T_month_i)) {
+    G <- 0.14 * (T_month_i - T_month_iminus1) # eq 44 FAO 56, Ch 3
+  } else {
+    stop("Must specify either T_month_iplus1 or T_month_i")
+  }
+  return(G)
+}
+
+#' Get vapor pressure from RHmean and temperature
+#'
+#' @param RHmean Mean relative humidity, pct (0-100)
+#' @param Tmax_C Max daily temperature, deg C
+#' @param Tmin_C Min daily temperature, deg C
+#' @export
+#' @details Calculate the actual vapor pressure from mean relative humidity and
+#'   max and min daily temperature. The calculation is as:
+#'
+#'   ea = RHmean / 100 * (es(Tmax_C) + es(Tmin_C)) / 2 (FAO 56 Eq. 19)
+#'
+#'   es(T) is the saturation vapor pressure at that temperature. The function
+#'   \code{get_es(T_C)} is used for saturation vapor pressure.
+#' @examples
+#' get_ea_from_RHmean(RHmean = 68, Tmax_C = 25, Tmin_C = 18)
+get_ea_from_RHmean <- function(RHmean, Tmax_C, Tmin_C) {
+  ea <- RHmean / 100 * (get_es(Tmax_C) + get_es(Tmin_C)) / 2
+  return(ea)
+}
+
+
+# s <- a * b * c1 / (Temp_C + c1)^2 * exp(b * Temp_C / (Temp_C + c1))
 
 #
 # a <- 0.611
@@ -369,5 +506,3 @@ get_Rn_daily <- function(lat, date, Tmax_K, Tmin_K, ea, n, N, albedo = 0.23, z, 
 # get_G_from_monthly_T <- function(T_month_iplus1, T_month_iminus1) {
 #   G <- 0.07 * (T_month_iplus1 - T_month_iminus1) # eq 42 FAO 56, Ch 3
 # }
-#
-# get_Rn_from

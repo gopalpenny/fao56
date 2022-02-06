@@ -49,3 +49,18 @@ test_that("FAO Penman-Monteith works for daily Ra, Rs, Rso, Rns, Rnl, Rn", {
   expect_equal(round(Rn,6), 7.622655)
   expect_equal(round(get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100),6), 7.636745)
 })
+
+test_that("Humidity calculations work for es, psychrometric constant", {
+  expect_equal(round(get_es(24.5), 6), 3.074649)
+  expect_equal(round(get_es(15), 6), 1.705346)
+  expect_equal(round(get_es_slope(24.5), 7), 0.1838427)
+  expect_equal(round(get_es_slope(15), 7), 0.1097914)
+  expect_equal(round(get_ea_from_RHmean(68, 25, 18), 6), 1.778801)
+  expect_equal(round(get_psychrometric_constant(), 8), 0.06717848)
+  expect_equal(round(get_psychrometric_constant(98.5), 8), 0.0653055)
+})
+
+test_that("Monthly ground heat flux works", {
+  expect_equal(get_G_from_monthly_T(15, 18), 0.21)
+  expect_equal(get_G_from_monthly_T(15, T_month_i = 18), 0.42)
+})

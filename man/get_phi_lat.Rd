@@ -18,5 +18,8 @@ Return latitude in rad. Evaluates the equation
 lat * pi / 180
 }
 \examples{
+\dontrun{
 phi <- get_phi_lat(13.1)
 }
+}
+\keyword{internal}

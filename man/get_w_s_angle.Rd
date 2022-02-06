@@ -7,9 +7,9 @@
 get_w_s_angle(lat, date)
 }
 \arguments{
-\item{phi}{latitude (Equation 22), rad}
+\item{lat}{latitude in decimal degrees}
 
-\item{delta}{solar decimation (Equation 24), rad.}
+\item{date}{date object or numeric jday}
 }
 \description{
 Get sunset hour angle (Eq 25)
@@ -20,7 +20,10 @@ Return solar decimation in rad. Evaluates the equation:
 w_s = acos(-tan(phi) * tan(delta))
 }
 \examples{
+\dontrun{
 lat <- 13.1
 date <- "2019-04-15"
 w_s <- get_w_s_angle(lat, date)
 }
+}
+\keyword{internal}

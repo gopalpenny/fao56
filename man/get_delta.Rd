@@ -18,6 +18,9 @@ Return solar decimation in rad. Evaluates the equation:
 delta = 0.409 * sin(2*pi/365 * jday - 1.39)
 }
 \examples{
+\dontrun{
 get_delta("2019-04-15")
 get_delta(105, "\%j")
 }
+}
+\keyword{internal}
