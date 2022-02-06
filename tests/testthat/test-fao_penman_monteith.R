@@ -56,8 +56,8 @@ test_that("Humidity calculations work for es, psychrometric constant", {
   expect_equal(round(get_es_slope(24.5), 7), 0.1838427)
   expect_equal(round(get_es_slope(15), 7), 0.1097914)
   expect_equal(round(get_ea_from_RHmean(68, 25, 18), 6), 1.778801)
-  expect_equal(round(get_psychrometric_constant(P = 101.325), 8), 0.06717848)
-  expect_equal(round(get_psychrometric_constant(P = 98.5), 8), 0.0653055)
+  expect_equal(round(get_psychrometric_constant(P = 101.325), 8), 0.06738113)
+  expect_equal(round(get_psychrometric_constant(P = 98.5), 8), 0.0655025)
 })
 
 test_that("Monthly ground heat flux works", {
@@ -90,9 +90,8 @@ gamma <- get_psychrometric_constant()
 ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2.2, es = es, ea = ea)
 
 test_that("fao_penman_monteith for reference ETo works for single values",{
-  expect_equal(round(ETo,6),3.116178)
+  expect_equal(round(ETo,6),3.11643)
 })
-
 
 ## Example 2: Using FAO climate data
 # Locate and read the example et0 csv file
@@ -147,6 +146,50 @@ clim <- clim_prep %>%
                                    es = es_kPa,
                                    ea = ea_kPa))
 
+clim_eval <- clim %>% bind_cols(et0_file %>% select(starts_with("ETo"))) %>%
+  mutate(ETo_ratio = (ETo_mm_per_d - ETo)/ETo_mm_per_d)
+clim_eval %>% summarize(mean_error = mean(abs(ETo_ratio))) %>% pull(mean_error)
+
 # test_that("fao_penman_monteith for reference ETo works for data frames",{
 #   expect_equal(round(ETo,6),3.116199)
 # })
+
+
+
+
+
+## Example 3: Chapter 4, Example 17 -- Bangkok, Thailand
+lat <- 13 + 44/60 # Bangkok
+Tmax_C <- 34.8
+Tmin_C <- 25.6
+ea <- 2.85
+Tmean <- mean(c(Tmax_C, Tmin_C))
+n <- 8.5 #h/day
+Tmean_april <- 30.2
+Tmean_march <- 29.2
+z = 2
+D <- es - ea
+P = 101.3
+gamma <- get_psychrometric_constant(z = 2)
+s <- get_es_slope(Tmean)
+
+date <- "2019-04-15"
+N <- get_daylight_hours(lat, date)
+# Ra <- get_Ra_daily(lat, date)
+# Rso <- get_Rso_daily(Ra, z = 100)
+# Rs <- get_Rs_daily(Ra, n, N)
+# # ea <- get_ea_from_RHmean(RHmean = 68, Tmax_C = Tmax_C, Tmin_C = Tmin_C)
+# Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
+Rn <- get_Rn_daily(lat, date, Tmax_C = Tmax_C, Tmin_C = Tmin_C, ea, n, N, z = 0)
+
+es_Tmin <- get_es(Tmin_C)
+es_Tmax <- get_es(Tmax_C)
+es <- mean(c(es_Tmin, es_Tmax))
+G <- get_G_from_monthly_T(T_month_iminus1 = Tmean_march, T_month_i = Tmean_april)
+
+ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2, es = es, ea = ea)
+
+test_that("fao_penman_monteith for reference ETo works for single values",{
+  expect_equal(round(ETo,6),5.716046)
+})
+
