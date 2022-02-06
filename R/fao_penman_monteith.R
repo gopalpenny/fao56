@@ -402,7 +402,7 @@ get_psychrometric_constant <- function(z = 0, P_kPa = NULL) {
   if (is.null(P_kPa)) {
     P_kPa <- get_P_atmosphere(z)
   }
-  gamma <- 0.663e-3*P_kPa
+  gamma <- 0.665e-3*P_kPa
   return(gamma)
 }
 
