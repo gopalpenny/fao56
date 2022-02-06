@@ -58,7 +58,9 @@ G <- 0
 gamma <- get_psychrometric_constant()
 ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2.2, es = es, ea = ea)
 
-## Example 2: Using FAO climate data
+
+## Example 2: Using FAO climate data for Maharastra, India (20.59N, 78.96E)
+
 # Locate and read the example et0 csv file
 et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
 clim_prep <- read_et0_csv(et0_path)
@@ -94,8 +96,8 @@ clim_prep <- clim_prep \%>\%
 clim_prep <- clim_prep \%>\%
   mutate(date = as.Date(paste("2019",month,"15",sep="-")),
          N = get_daylight_hours(lat, date),
-         n = Sun_shine_pct * N,
-         Rn_MJ_per_day = get_Rn_daily(lat, date, Tmp_max_degC, Tmp_min_degC, ea, n, N, albedo = 0.23, z = 0))
+         n = Sun_shine_pct * N / 100,
+         Rn_MJ_per_day = get_Rn_daily(lat, date, Tmp_max_degC, Tmp_min_degC, ea, n, N, albedo = 0.23, z = 251))
 
 gamma <- get_psychrometric_constant()
 

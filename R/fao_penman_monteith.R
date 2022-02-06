@@ -12,11 +12,11 @@
 #' # Read the file
 #' et0 <- read_et0_csv(et0_path)
 read_et0_csv <- function(et0_path) {
-  et0_vars <- readr::read_csv(et0_path, skip = 1, n_max = 1, col_names = FALSE) %>%
+  et0_vars <- suppressMessages(readr::read_csv(et0_path, skip = 1, n_max = 1, col_names = FALSE)) %>%
     as.character() %>% ggsub("\\.","") %>% ggsub("Prc","precip") %>%
     ggsub(" ","_") %>%
     ggsub("[\\(\\)]","")
-  et0_units <- readr::read_csv(et0_path, skip = 2, n_max = 1, col_names = FALSE) %>%
+  et0_units <- suppressMessages(readr::read_csv(et0_path, skip = 2, n_max = 1, col_names = FALSE)) %>%
     as.character() %>%
     ggsub("\\%","pct") %>%
     ggsub(".C$","degC") %>%
@@ -564,7 +564,9 @@ get_P_atmosphere <- function(z) {
 #' gamma <- get_psychrometric_constant()
 #' ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2.2, es = es, ea = ea)
 #'
-#' ## Example 2: Using FAO climate data
+#'
+#' ## Example 2: Using FAO climate data for Maharastra, India (20.59N, 78.96E)
+#'
 #' # Locate and read the example et0 csv file
 #' et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
 #' clim_prep <- read_et0_csv(et0_path)
@@ -622,6 +624,78 @@ fao_penman_monteith <- function(Rn, G, gamma, T_C, u2, es, ea) {
   return(ETo_mm_day)
 }
 
-#
-# ET0_mm_day
 
+
+#' Generate ETo predictors from aquastat data
+#'
+#' @param clim_data \code{data.frame} of monthly climate data in order of Jan-Dec, containing the columns described below
+#' @param lat latitude in decimal degrees
+#' @param z elevation in m
+#' @param col_select character vector specifying which columns to return from the original data
+#' @export
+#' @details
+#' \itemize{
+#' \item Rel_Hum_pct
+#' \item Tmp_max_degC
+#' \item Tmp_min_degC
+#' \item Tmp_Mean_degC
+#' \item Sun_shine_pct (0-100)
+#' \item Wind_2m_m_per_s
+#' }
+#' @examples
+#' Locate and read the example et0 csv file
+#' et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
+#' col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC", "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
+#' clim_data <- read_et0_csv(et0_path)
+#' ETo_df <- gen_ETo_predictors_from_aquastat(clim_data, lat = 20.59, z = 231, col_select = col_select)
+gen_ETo_predictors_from_aquastat <- function(clim_data, lat, z, col_select = NULL) {
+  clim_prep <- clim_data
+
+  clim_prep$lat <- lat
+  clim_prep$month <- 1:12
+  clim_prep$date <- as.Date(paste("2019",clim_prep$month,"15",sep="-"))
+
+  # Estimate vapor pressure
+
+  clim_prep$ea_kPa <- get_ea_from_RHmean(clim_prep$Rel_Hum_pct,clim_prep$Tmp_max_degC, clim_prep$Tmp_min_degC)
+  clim_prep$es_Tmin <- get_es(clim_prep$Tmp_min_degC)
+  clim_prep$es_Tmax <- get_es(clim_prep$Tmp_max_degC)
+  clim_prep$es_kPa <- (clim_prep$es_Tmin + clim_prep$es_Tmax)/2
+
+  # Estimate G
+  # calculating G requires getting temperature for the previous and subequent months
+  # to do this, add Jan to the end (month = 13) and Dec to the beginning (month = 0)
+  # then remove these months after the calculation
+  clim_prep <- clim_prep %>%
+    dplyr::bind_rows(clim_prep %>% dplyr::filter(month == 1) %>% dplyr::mutate(month = 13))%>%
+    dplyr::bind_rows(clim_prep %>% dplyr::filter(month == 12) %>% dplyr::mutate(month = 0))%>%
+    dplyr::arrange(month)
+  clim_prep$T_iminus1 <- dplyr::lag(clim_prep$Tmp_Mean_degC)
+  clim_prep$T_iplus1 <- dplyr::lead(clim_prep$Tmp_Mean_degC)
+  clim_prep$G_MJ_per_day <- get_G_from_monthly_T(T_month_iminus1 = clim_prep$T_iminus1, T_month_iplus1 = clim_prep$T_iplus1)
+  clim_prep <- clim_prep[clim_prep$month %in% 1:12,]
+
+  # Estimate Rn
+  clim_prep$N <- get_daylight_hours(clim_prep$lat, clim_prep$date)
+  clim_prep$n <- clim_prep$Sun_shine_pct * clim_prep$N / 100
+  clim_prep$Rn_MJ_per_day = get_Rn_daily(clim_prep$lat, clim_prep$date,
+                                         clim_prep$Tmp_max_degC, clim_prep$Tmp_min_degC,
+                                         clim_prep$ea_kPa, clim_prep$n, clim_prep$N, albedo = 0.23, z = z)
+  clim_prep$gamma <- get_psychrometric_constant(z = z)
+
+  # Calculate ETo from data
+  clim <- clim_prep
+  clim$ETo_calc <- fao_penman_monteith(Rn = clim$Rn_MJ_per_day,
+                                       G = clim$G_MJ_per_day,
+                                       gamma = clim$gamma,
+                                       T_C = clim$Tmp_Mean_degC,
+                                       u2 = clim$Wind_2m_m_per_s,
+                                       es = clim$es_kPa,
+                                       ea = clim$ea_kPa)
+
+  if (!is.null(col_select)) {
+    clim <- clim[,col_select]
+  }
+
+  return(clim)
+}

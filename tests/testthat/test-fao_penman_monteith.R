@@ -148,7 +148,7 @@ clim <- clim_prep %>%
 
 clim_eval <- clim %>% bind_cols(et0_file %>% select(starts_with("ETo"))) %>%
   mutate(ETo_ratio = (ETo_mm_per_d - ETo)/ETo_mm_per_d)
-clim_eval %>% summarize(mean_error = mean(abs(ETo_ratio))) %>% pull(mean_error)
+# clim_eval %>% summarize(mean_error = mean(abs(ETo_ratio))) %>% pull(mean_error)
 
 # test_that("fao_penman_monteith for reference ETo works for data frames",{
 #   expect_equal(round(ETo,6),3.116199)
@@ -192,4 +192,28 @@ ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tm
 test_that("fao_penman_monteith for reference ETo works for single values",{
   expect_equal(round(ETo,6),5.716046)
 })
+
+# Locate and read the example et0 csv file
+et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
+col_select <- c("Rn_MJ_per_day", "G_MJ_per_day", "Tmp_Mean_degC", "Wind_2m_m_per_s", "es_kPa", "ea_kPa", "ETo_calc", "ETo_mm_per_d")
+clim_data <- read_et0_csv(et0_path)
+ETo_df <- gen_ETo_predictors_from_aquastat(clim_data, lat = 20.59, z = 231, col_select = col_select) %>%
+  dplyr::mutate(dplyr::across(tidyselect::vars_select_helpers$where(is.numeric), function(x) round(x, 4))) #%>% ggp::print_data_frame_for_entry()
+ETo_saved <- tibble::tibble(Rn_MJ_per_day=c(8.198, 10.0156, 11.0713, 12.5548, 13.4567, 12.3951, 10.5665, 10.3673, 11.2813, 10.911, 8.747, 7.6178),
+  G_MJ_per_day=c(0.259, 0.49, 0.595, 0.476, -0.042, -0.504, -0.357, -0.035, -0.035, -0.308, -0.42, -0.119),
+  Tmp_Mean_degC=c(21.6, 24.4, 28.6, 32.9, 35.4, 32.3, 28.2, 27.2, 27.7, 26.7, 23.3, 20.7),
+  Wind_2m_m_per_s=c(1.1, 1.4, 1.4, 1.6, 2.2, 2.4, 2.1, 1.9, 1.4, 1.2, 1.2, 1),
+  es_kPa=c(2.8437, 3.3859, 4.3211, 5.4523, 6.1649, 5.046, 3.9055, 3.6824, 3.8213, 3.7068, 3.1116, 2.6961),
+  ea_kPa=c(1.5299, 1.4729, 1.3352, 1.4121, 1.7817, 2.8056, 2.9877, 2.9312, 2.8277, 2.2945, 1.7269, 1.5045),
+  ETo_calc=c(3.2297, 4.4418, 5.5234, 6.8865, 8.3215, 6.3163, 4.0885, 3.6882, 4.0625, 4.2794, 3.6859, 2.9975),
+  ETo_mm_per_d=c(3.3, 4.5, 5.6, 6.9, 8.4, 6.4, 4.2, 3.7, 4.1, 4.3, 3.7, 3.1))
+
+test_that("gen_ETo_predictors_from_aquastat properly pulls predictors", {
+  expect_equal(ETo_saved, ETo_df)
+})
+
+
+
+
+
 

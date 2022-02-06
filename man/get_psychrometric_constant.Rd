@@ -4,9 +4,11 @@
 \alias{get_psychrometric_constant}
 \title{Calculate the psychrometric constant}
 \usage{
-get_psychrometric_constant(P_kPa = 101.325)
+get_psychrometric_constant(z = 0, P_kPa = NULL)
 }
 \arguments{
+\item{z}{elevation in m. Takes precedence over P_kPa}
+
 \item{P_kPa}{Pressure in kPa}
 }
 \description{
@@ -17,6 +19,9 @@ Calculates the psychrometric constant as
 
 gamma = cp * P / (M_water_air * l), org
 
+if P_kPa is given, it takes precedence over z. If z is used, pressure is calculated
+according to get_P_atmosphere().
+
 gamma = 0.663e-3 P
 
 gamma psychrometric constant, kPa / deg C,
@@ -26,5 +31,7 @@ cp specific heat at constant pressure, 1.013e-3, MJ / kg / deg C
 M_water_air ratio molecular weight of water vapor/dry air = 0.622.
 }
 \examples{
-get_psychrometric_constant(101.325)
+get_psychrometric_constant(P = 101.325)
+get_psychrometric_constant(z = 231)
+get_psychrometric_constant(P = 98.59907)
 }
