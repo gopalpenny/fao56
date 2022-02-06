@@ -23,7 +23,7 @@ gamma psychrometric constant, kPa / deg C,
 P atmospheric pressure, kPa
 l latent heat of vaporization, 2.45 MJ / kg,
 cp specific heat at constant pressure, 1.013e-3, MJ / kg / deg C
-M_water_air ratio molecular weight of water vapour/dry air = 0.622.
+M_water_air ratio molecular weight of water vapor/dry air = 0.622.
 }
 \examples{
 get_psychrometric_constant(101.325)

@@ -29,16 +29,16 @@ lat <- -22.9 # Rio de Janeiro
 date <- "2019-05-15"
 n <- 220 / 31 # 220 hours in a month / 31 days
 N <- get_daylight_hours(lat, date)
-Tmax_K <- 25.1+273.16
-Tmin_K <- 19.1+273.16
+Tmax_C <- 25.1
+Tmin_C <- 19.1
 ea <- 2.1
 
 Ra <- get_Ra_daily(lat, date)
 Rs <- get_Rs_daily(Ra, n, N)
 Rso <- get_Rso_daily(Ra, z = 0)
 Rns <- get_Rns_daily(Rs, albedo = 0.23)
-Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
-Rn <- get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 0)
+Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
+Rn <- get_Rn_daily(lat, date, Tmax_C, Tmin_C, ea, n, N, z = 0)
 
 test_that("FAO Penman-Monteith works for daily Ra, Rs, Rso, Rns, Rnl, Rn", {
   expect_equal(round(Ra,5), 25.11103)
@@ -47,7 +47,7 @@ test_that("FAO Penman-Monteith works for daily Ra, Rs, Rso, Rns, Rnl, Rn", {
   expect_equal(round(Rns,5), 11.1312)
   expect_equal(round(Rnl,6), 3.508541)
   expect_equal(round(Rn,6), 7.622655)
-  expect_equal(round(get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100),6), 7.636745)
+  expect_equal(round(get_Rn_daily(lat, date, Tmax_C, Tmin_C, ea, n, N, z = 100),6), 7.636745)
 })
 
 test_that("Humidity calculations work for es, psychrometric constant", {
@@ -56,11 +56,97 @@ test_that("Humidity calculations work for es, psychrometric constant", {
   expect_equal(round(get_es_slope(24.5), 7), 0.1838427)
   expect_equal(round(get_es_slope(15), 7), 0.1097914)
   expect_equal(round(get_ea_from_RHmean(68, 25, 18), 6), 1.778801)
-  expect_equal(round(get_psychrometric_constant(), 8), 0.06717848)
-  expect_equal(round(get_psychrometric_constant(98.5), 8), 0.0653055)
+  expect_equal(round(get_psychrometric_constant(P = 101.325), 8), 0.06717848)
+  expect_equal(round(get_psychrometric_constant(P = 98.5), 8), 0.0653055)
 })
 
 test_that("Monthly ground heat flux works", {
   expect_equal(get_G_from_monthly_T(15, 18), 0.21)
   expect_equal(get_G_from_monthly_T(15, T_month_i = 18), 0.42)
 })
+
+
+
+
+## Example 1: Single value data
+lat <- -22.9 # Rio de Janeiro
+date <- "2019-05-15"
+n <- 220 / 31 # 220 hours in a month / 31 days
+N <- get_daylight_hours(lat, date)
+Ra <- get_Ra_daily(lat, date)
+Rso <- get_Rso_daily(Ra, z = 100)
+Rs <- get_Rs_daily(Ra, n, N)
+Tmax_C <- 25.1
+Tmin_C <- 19.1
+ea <- get_ea_from_RHmean(RHmean = 68, Tmax_C = Tmax_C, Tmin_C = Tmin_C)
+Rn <- get_Rn_daily(lat, date, Tmax_C = Tmax_C, Tmin_C = Tmin_C, ea, n, N, z = 0)
+
+es_Tmin <- get_es(Tmin_C)
+es_Tmax <- get_es(Tmax_C)
+Tmean <- mean(c(Tmin_C, Tmax_C))
+es <- mean(c(es_Tmin, es_Tmax))
+G <- 0
+gamma <- get_psychrometric_constant()
+ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2.2, es = es, ea = ea)
+
+test_that("fao_penman_monteith for reference ETo works for single values",{
+  expect_equal(round(ETo,6),3.116178)
+})
+
+
+## Example 2: Using FAO climate data
+# Locate and read the example et0 csv file
+et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
+et0_file <- read_et0_csv(et0_path)
+clim_prep <- et0_file
+
+library(dplyr)
+clim_prep$lat <- 20.59
+clim_prep$month <- 1:12
+clim_prep$date <- as.Date(paste("2019",clim_prep$month,"15",sep="-"))
+
+# Estimate vapor pressure
+
+clim_prep <- clim_prep %>%
+  mutate(ea_kPa = get_ea_from_RHmean(Rel_Hum_pct,Tmp_max_degC, Tmp_min_degC),
+         es_Tmin = get_es(Tmp_min_degC),
+         es_Tmax = get_es(Tmp_max_degC),
+         es_kPa = (es_Tmin + es_Tmax)/2)
+
+
+# Estimate G
+# calculating G requires getting temperature for the previous and subequent months
+# to do this, add Jan to the end (month = 13) and Dec to the beginning (month = 0)
+# then remove these months after the calculation
+clim_prep <- clim_prep %>%
+  bind_rows(clim_prep %>% filter(month == 1) %>% mutate(month = 13))%>%
+  bind_rows(clim_prep %>% filter(month == 12) %>% mutate(month = 0))%>%
+  arrange(month) %>%
+  mutate(T_iminus1 = lag(Tmp_Mean_degC),
+         T_iplus1 = lead(Tmp_Mean_degC),
+         G_MJ_per_day = get_G_from_monthly_T(T_month_iminus1 = T_iminus1, T_month_iplus1 = T_iplus1)) %>%
+  filter(month %in% 1:12)
+
+# Estimate Rn
+clim_prep <- clim_prep %>%
+  mutate(date = as.Date(paste("2019",month,"15",sep="-")),
+         N = get_daylight_hours(lat, date),
+         n = Sun_shine_pct * N / 100,
+         Rn_MJ_per_day = get_Rn_daily(lat, date, Tmp_max_degC, Tmp_min_degC, ea, n, N, albedo = 0.23, z = 0))
+
+gamma <- get_psychrometric_constant(z = 231)
+
+# Calculate ETo from data
+clim <- clim_prep %>%
+  select(Rn_MJ_per_day, G_MJ_per_day, Tmean_C = Tmp_Mean_degC, u2_m_per_s = Wind_2m_m_per_s, es_kPa, ea_kPa) %>%
+  mutate(ETo = fao_penman_monteith(Rn = Rn_MJ_per_day,
+                                   G = G_MJ_per_day,
+                                   gamma = gamma,
+                                   T_C = Tmean_C,
+                                   u2 = u2_m_per_s,
+                                   es = es_kPa,
+                                   ea = ea_kPa))
+
+# test_that("fao_penman_monteith for reference ETo works for data frames",{
+#   expect_equal(round(ETo,6),3.116199)
+# })

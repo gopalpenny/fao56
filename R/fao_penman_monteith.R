@@ -264,11 +264,9 @@ get_Rso_daily <- function(Ra, z) {
 #'
 #' Get net outgoing longwave radiation, Rnl (FAO 56, Eq. 39) in MJ/m^2/day
 #' @param Ra downward shortwave radiation, MJ/m^2/day
-#' @param Tmax_K maximum absolute temperature during the 24-hour period, K = deg
-#'   C + 273.16
-#' @param Tmin_K, K minimum absolute temperature during the 24-hour period, K =
-#'   deg C + 273.16
-#' @param ea actual vapour pressure, kPa
+#' @param Tmax_C maximum absolute temperature during the 24-hour period
+#' @param Tmin_C minimum absolute temperature during the 24-hour period
+#' @param ea actual vapor pressure, kPa
 #' @param Rs measured or calculated. (Equation 35) solar radiation [MJ m-2
 #'   day-1],
 #' @param Rso calculated (Equation 36 or 37) clear-sky radiation [MJ m-2 day-1].
@@ -279,7 +277,8 @@ get_Rso_daily <- function(Ra, z) {
 #'   Rnl = sigma * (Tmax_K + Tmin_K)/2 * (0.34 - 0.14 * sqrt(e_a)) * (1.35 *
 #'   Rs/Rso - 0.35)
 #'
-#'
+#'   Tmax_K is Tmax_C + 273.16
+#'   Tmin_K is Tmin_C + 273.16
 #'   sigma is the Stefan-Boltzmann constant, 4.903e-9 MJ/K^4/m^2/day,
 #'   Rs/Rso relative shortwave radiation (limited to <= 1.0).
 #' @examples
@@ -290,11 +289,21 @@ get_Rso_daily <- function(Ra, z) {
 #' Ra <- get_Ra_daily(lat, date)
 #' Rso <- get_Rso_daily(Ra, z = 100)
 #' Rs <- get_Rs_daily(Ra, n, N)
-#' Tmax_K <- 25.1+273.16
-#' Tmin_K <- 19.1+273.16
+#' Tmax_C <- 25.1
+#' Tmin_C <- 19.1
 #' ea <- 2.1
-#' Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
-get_Rnl_daily <- function(Ra, Tmax_K, Tmin_K, ea, Rs, Rso) {
+#' Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
+get_Rnl_daily <- function(Ra, Tmax_C, Tmin_C, ea, Rs, Rso) {
+  Tmax_K <- Tmax_C + 273.16
+  Tmin_K <- Tmin_C + 273.16
+  if (any(Tmax_K < Tmin_K)) {
+    stop("Tmax_C is less than Tmin_C. Check the order of inputs.")
+  }
+
+  if (any(Rso < Rs)) { # Rs/Rso has an upper bound of 1
+    # warning("Rs/Rso is greater than 1. Fixing Rs/Rso to 1")
+    Rso <- pmax(Rs, Rso)
+  }
   sigma <- 4.903e-9
   Rnl <- sigma * (Tmax_K^4 + Tmin_K^4)/2 * (0.34 - 0.14 * sqrt(ea)) * (1.35 * Rs/Rso - 0.35)
   return(Rnl)
@@ -307,11 +316,9 @@ get_Rnl_daily <- function(Ra, Tmax_K, Tmin_K, ea, Rs, Rso) {
 #' Get net radiation, Rnl (FAO 56, Eq. 40) in MJ/m^2/day
 #' @param lat latitude in decimal degrees
 #' @param date date object or numeric jday
-#' @param Tmax_K maximum absolute temperature during the 24-hour period, K = deg
-#'   C + 273.16
-#' @param Tmin_K, K minimum absolute temperature during the 24-hour period, K =
-#'   deg C + 273.16
-#' @param ea actual vapour pressure, kPa
+#' @param Tmax_C maximum absolute temperature during the 24-hour period, deg C
+#' @param Tmin_C, minimum absolute temperature during the 24-hour period, deg C
+#' @param ea actual vapor pressure, kPa
 #' @param n actual duration of sunshine, hour
 #' @param N maximum possible duration of sunshine or daylight hours, hour
 #' @param as regression constant, expressing the fraction of extraterrestrial
@@ -332,7 +339,7 @@ get_Rnl_daily <- function(Ra, Tmax_K, Tmin_K, ea, Rs, Rso) {
 #'
 #'   \itemize{ \item{Ra <- get_Ra_daily(lat, date)} \item{Rs <- get_Rs_daily(Ra,
 #'   n, N)} \item{Rso <- get_Rso_daily(Ra, z)} \item{Rns <- get_Rns_daily(Rs,
-#'   albedo)} \item{Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)} }
+#'   albedo)} \item{Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)} }
 #' @examples
 #' lat <- -22.9 # Rio de Janeiro
 #' date <- "2019-05-15"
@@ -341,17 +348,27 @@ get_Rnl_daily <- function(Ra, Tmax_K, Tmin_K, ea, Rs, Rso) {
 #' Ra <- get_Ra_daily(lat, date)
 #' Rso <- get_Rso_daily(Ra, z = 100)
 #' Rs <- get_Rs_daily(Ra, n, N)
-#' Tmax_K <- 25.1+273.16
-#' Tmin_K <- 19.1+273.16
+#' Tmax_C <- 25.1
+#' Tmin_C <- 19.1
 #' ea <- 2.1
-#' Rn <- get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100)
-get_Rn_daily <- function(lat, date, Tmax_K, Tmin_K, ea, n, N, albedo = 0.23, z, as = 0.25, bs = 0.5) {
+#' Rn <- get_Rn_daily(lat, date, Tmax_C, Tmin_C, ea, n, N, z = 100)
+get_Rn_daily <- function(lat, date, Tmax_C, Tmin_C, ea, n, N, albedo = 0.23, z, as = 0.25, bs = 0.5) {
+
+  Tmax_K <- Tmax_C + 273.16
+  Tmin_K <- Tmin_C + 273.16
+  if (any(Tmax_K < Tmin_K)) {
+    stop("Tmax_C is less than Tmin_C. Check the order of inputs.")
+  }
+
+  if (any(n > N)) {
+    stop("n > N. This cannot be the case. Check values.")
+  }
 
   Ra <- get_Ra_daily(lat, date)
   Rs <- get_Rs_daily(Ra, n, N)
   Rso <- get_Rso_daily(Ra, z)
   Rns <- get_Rns_daily(Rs, albedo)
-  Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
+  Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
 
   Rn <- Rns - Rnl
   return(Rn)
@@ -359,6 +376,7 @@ get_Rn_daily <- function(lat, date, Tmax_K, Tmin_K, ea, n, N, albedo = 0.23, z, 
 
 #' Calculate the psychrometric constant
 #'
+#' @param z elevation in m. Takes precedence over P_kPa
 #' @param P_kPa Pressure in kPa
 #' @export
 #' @details
@@ -366,16 +384,24 @@ get_Rn_daily <- function(lat, date, Tmax_K, Tmin_K, ea, n, N, albedo = 0.23, z, 
 #'
 #' gamma = cp * P / (M_water_air * l), org
 #'
+#' if P_kPa is given, it takes precedence over z. If z is used, pressure is calculated
+#' according to get_P_atmosphere().
+#'
 #' gamma = 0.663e-3 P
 #'
 #' gamma psychrometric constant, kPa / deg C,
 #' P atmospheric pressure, kPa
 #' l latent heat of vaporization, 2.45 MJ / kg,
 #' cp specific heat at constant pressure, 1.013e-3, MJ / kg / deg C
-#' M_water_air ratio molecular weight of water vapour/dry air = 0.622.
+#' M_water_air ratio molecular weight of water vapor/dry air = 0.622.
 #' @examples
-#' get_psychrometric_constant(101.325)
-get_psychrometric_constant <- function(P_kPa = 101.325) {
+#' get_psychrometric_constant(P = 101.325)
+#' get_psychrometric_constant(z = 231)
+#' get_psychrometric_constant(P = 98.59907)
+get_psychrometric_constant <- function(z = 0, P_kPa = NULL) {
+  if (is.null(P_kPa)) {
+    P_kPa <- get_P_atmosphere(z)
+  }
   gamma <- 0.663e-3*P_kPa
   return(gamma)
 }
@@ -434,17 +460,17 @@ get_es_slope <- function(T_C) {
 #' @export
 #' @details
 #'
-#' Must specify \code{T_month_iminus1} and either \code{T_month_iplus1} or \code{T_month_i}.
-#' \code{T_month_iplus1} is given preference. The calculation is then either
+#' Must specify \code{T_month_iminus1} and either \code{T_month_iplus1} or
+#' \code{T_month_i}. \code{T_month_iplus1} is given preference. The calculation
+#' is then either
 #'
 #' G = 0.07 * (T_month_iplus1 - T_month_iminus1), eq 43 FAO 56, Ch 3, or
 #'
 #' G = 0.14 * (T_month_i - T_month_iminus1) # eq 44 FAO 56, Ch 3
 #'
-#' G soil heat flux, MJ / m^2/ day
-#' T_month_iplus1 air temperature at month i+1, deg C
-#' T_month_i air temperature at month i+1, deg C
-#' T_month_iminus1 air temperature at month i-1, deg C
+#' G soil heat flux, MJ / m^2/ day T_month_iplus1 air temperature at month i+1,
+#' deg C T_month_i air temperature at month i+1, deg C T_month_iminus1 air
+#' temperature at month i-1, deg C
 #' @examples
 #' get_G_from_monthly_T(15, 18)
 #' get_G_from_monthly_T(15, T_month_i = 18)
@@ -475,34 +501,127 @@ get_G_from_monthly_T <- function(T_month_iminus1, T_month_iplus1 = NULL, T_month
 #' @examples
 #' get_ea_from_RHmean(RHmean = 68, Tmax_C = 25, Tmin_C = 18)
 get_ea_from_RHmean <- function(RHmean, Tmax_C, Tmin_C) {
+  if (any(Tmax_C < Tmin_C)) {
+    stop("Tmax_C is greater than Tmin_C Check the order of inputs.")
+  }
   ea <- RHmean / 100 * (get_es(Tmax_C) + get_es(Tmin_C)) / 2
   return(ea)
 }
 
+#' Get atmospheric pressure at elevation
+#'
+#' @param z elevation, masl
+#' @details Get atmospheric pressure, in kPa, at elevation, in m
+#' @examples
+#' \dontrun{
+#' get_P_atmosphere(0)
+#' }
+get_P_atmosphere <- function(z) {
+  P_kPa <- 101.3*((293 - 0.0065 * z)/293)^5.26
+  return(P_kPa)
+}
 
-# s <- a * b * c1 / (Temp_C + c1)^2 * exp(b * Temp_C / (Temp_C + c1))
+
+#' FAO Penman Monteith reference ETo
+#'
+#' @param Rn net radiation at the crop surface, MJ / m^2 / day
+#' @param G soil heat flux density, MJ / m^2 / day
+#' @param T_C mean daily air temperature at 2 m height, deg C
+#' @param u2 wind speed at 2 m height, m/s
+#' @param es saturation vapor pressure, kPa
+#' @param ea actual vapor pressure, kPa
+#' @param s slope vapor pressure curve, kPa / deg C
+#' @param gamma psychrometric constant, kPa / deg C
+#' @export
+#' @details
+#' This function calculates ETo reference evapotranspiration in mm / day using the
+#' FAO Penman-Monteith equation for ETo (FAO 56, Chapter 2, Eq 6):
+#'
+#' ETo_mm_day = (0.408 * s * (Rn - G) + gamma * 900 / (T_C + 273) * u2 * (es - ea)) / (s + gamma * (1 + 0.34 * u2))
+#'
+#' Note that the equation requires specific units for each variable, as noted above.
+#'
+#' es - ea is the saturation vapor pressure deficit, kPa
+#' @examples
+#' ## Example 1: Single value data
+#' lat <- -22.9 # Rio de Janeiro
+#' date <- "2019-05-15"
+#' n <- 220 / 31 # 220 hours in a month / 31 days
+#' N <- get_daylight_hours(lat, date)
+#' Ra <- get_Ra_daily(lat, date)
+#' Rso <- get_Rso_daily(Ra, z = 100)
+#' Rs <- get_Rs_daily(Ra, n, N)
+#' Tmax_C <- 25.1
+#' Tmin_C <- 19.1
+#' ea <- get_ea_from_RHmean(RHmean = 68, Tmax_C = Tmax_C, Tmin_C = Tmin_C)
+#' Rn <- get_Rn_daily(lat, date, Tmax_C = Tmax_C, Tmin_C = Tmin_C, ea, n, N, z = 0)
+#'
+#' es_Tmin <- get_es(Tmin_C)
+#' es_Tmax <- get_es(Tmax_C)
+#' Tmean <- mean(c(Tmin_C, Tmax_C))
+#' es <- mean(c(es_Tmin, es_Tmax))
+#' G <- 0
+#' gamma <- get_psychrometric_constant()
+#' ETo <- fao_penman_monteith(Rn, G, gamma = get_psychrometric_constant(), T_C = Tmean, u2 = 2.2, es = es, ea = ea)
+#'
+#' ## Example 2: Using FAO climate data
+#' # Locate and read the example et0 csv file
+#' et0_path <- system.file("extdata", "ET0_example_file.csv", package = "fao56")
+#' clim_prep <- read_et0_csv(et0_path)
+#'
+#' library(dplyr)
+#' clim_prep$lat <- 25
+#' clim_prep$month <- 1:12
+#' clim_prep$date <- as.Date(paste("2019",clim_prep$month,"15",sep="-"))
+#'
+#' # Estimate vapor pressure
+#'
+#' clim_prep <- clim_prep %>%
+#'   mutate(ea_kPa = get_ea_from_RHmean(Rel_Hum_pct,Tmp_max_degC, Tmp_min_degC),
+#'          es_Tmin = get_es(Tmp_min_degC),
+#'          es_Tmax = get_es(Tmp_max_degC),
+#'          es_kPa = (es_Tmin + es_Tmax)/2)
+#'
+#'
+#' # Estimate G
+#' # calculating G requires getting temperature for the previous and subequent months
+#' # to do this, add Jan to the end (month = 13) and Dec to the beginning (month = 0)
+#' # then remove these months after the calculation
+#' clim_prep <- clim_prep %>%
+#'   bind_rows(clim_prep %>% filter(month == 1) %>% mutate(month = 13))%>%
+#'   bind_rows(clim_prep %>% filter(month == 12) %>% mutate(month = 0))%>%
+#'   arrange(month) %>%
+#'   mutate(T_iminus1 = lag(Tmp_Mean_degC),
+#'          T_iplus1 = lead(Tmp_Mean_degC),
+#'          G_MJ_per_day = get_G_from_monthly_T(T_month_iminus1 = T_iminus1, T_month_iplus1 = T_iplus1)) %>%
+#'   filter(month %in% 1:12)
+#'
+#' # Estimate Rn
+#' clim_prep <- clim_prep %>%
+#'   mutate(date = as.Date(paste("2019",month,"15",sep="-")),
+#'          N = get_daylight_hours(lat, date),
+#'          n = Sun_shine_pct * N / 100,
+#'          Rn_MJ_per_day = get_Rn_daily(lat, date, Tmp_max_degC, Tmp_min_degC, ea, n, N, albedo = 0.23, z = 251))
+#'
+#' gamma <- get_psychrometric_constant()
+#'
+#' # Calculate ETo from data
+#' clim <- clim_prep %>%
+#'   select(Rn_MJ_per_day, G_MJ_per_day, Tmean_C = Tmp_Mean_degC, u2_m_per_s = Wind_2m_m_per_s, es_kPa, ea_kPa) %>%
+#'   mutate(ETo = fao_penman_monteith(Rn = Rn_MJ_per_day,
+#'                                    G = G_MJ_per_day,
+#'                                    gamma = gamma,
+#'                                    T_C = Tmean_C,
+#'                                    u2 = u2_m_per_s,
+#'                                    es = es_kPa,
+#'                                    ea = ea_kPa))
+fao_penman_monteith <- function(Rn, G, gamma, T_C, u2, es, ea) {
+  s <- get_es_slope(T_C)
+  ETo_mm_day <- (0.408 * s * (Rn - G) + gamma * 900 / (T_C + 273) * u2 * (es - ea)) /
+    (s + gamma * (1 + 0.34 * u2))
+  return(ETo_mm_day)
+}
 
 #
-# a <- 0.611
-# b <- 17.502
-# c1 <- 240.97
-# Temp_C <- 25
-#
-# s <- a * b * c1 / (Temp_C + c1)^2 * exp(b * Temp_C / (Temp_C + c1))
-# s
-#
-# RH <- 0.5
-# R_N <-
-#
-#   e_s_T <- a * exp(b * Temp_C / (Temp_C + c1))
-# e_s_T
-# e_a <- RH * e_s_T
-#
-# et0_data %>% rename(R_N = )
-#
-# ET0_mm_day <- 0.408 * s * (R_N - G) + gamma * 900 / (Temp_C + 273) * u2 * (e_s_T - e_a)
 # ET0_mm_day
-#
-# get_G_from_monthly_T <- function(T_month_iplus1, T_month_iminus1) {
-#   G <- 0.07 * (T_month_iplus1 - T_month_iminus1) # eq 42 FAO 56, Ch 3
-# }
+

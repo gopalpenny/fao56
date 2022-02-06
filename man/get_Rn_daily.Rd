@@ -7,8 +7,8 @@
 get_Rn_daily(
   lat,
   date,
-  Tmax_K,
-  Tmin_K,
+  Tmax_C,
+  Tmin_C,
   ea,
   n,
   N,
@@ -23,13 +23,11 @@ get_Rn_daily(
 
 \item{date}{date object or numeric jday}
 
-\item{Tmax_K}{maximum absolute temperature during the 24-hour period, K = deg
-C + 273.16}
+\item{Tmax_C}{maximum absolute temperature during the 24-hour period, deg C}
 
-\item{Tmin_K, }{K minimum absolute temperature during the 24-hour period, K =
-deg C + 273.16}
+\item{Tmin_C, }{minimum absolute temperature during the 24-hour period, deg C}
 
-\item{ea}{actual vapour pressure, kPa}
+\item{ea}{actual vapor pressure, kPa}
 
 \item{n}{actual duration of sunshine, hour}
 
@@ -60,7 +58,7 @@ This function calculates net radiation, in MJ/m^2/day. It uses Eq.
 
   \itemize{ \item{Ra <- get_Ra_daily(lat, date)} \item{Rs <- get_Rs_daily(Ra,
   n, N)} \item{Rso <- get_Rso_daily(Ra, z)} \item{Rns <- get_Rns_daily(Rs,
-  albedo)} \item{Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)} }
+  albedo)} \item{Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)} }
 }
 \examples{
 lat <- -22.9 # Rio de Janeiro
@@ -70,8 +68,8 @@ N <- get_daylight_hours(lat, date)
 Ra <- get_Ra_daily(lat, date)
 Rso <- get_Rso_daily(Ra, z = 100)
 Rs <- get_Rs_daily(Ra, n, N)
-Tmax_K <- 25.1+273.16
-Tmin_K <- 19.1+273.16
+Tmax_C <- 25.1
+Tmin_C <- 19.1
 ea <- 2.1
-Rn <- get_Rn_daily(lat, date, Tmax_K, Tmin_K, ea, n, N, z = 100)
+Rn <- get_Rn_daily(lat, date, Tmax_C, Tmin_C, ea, n, N, z = 100)
 }

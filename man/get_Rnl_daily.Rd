@@ -4,18 +4,16 @@
 \alias{get_Rnl_daily}
 \title{Get net outgoing longwave radiation (Rnl)}
 \usage{
-get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
+get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
 }
 \arguments{
 \item{Ra}{downward shortwave radiation, MJ/m^2/day}
 
-\item{Tmax_K}{maximum absolute temperature during the 24-hour period, K = deg
-C + 273.16}
+\item{Tmax_C}{maximum absolute temperature during the 24-hour period}
 
-\item{Tmin_K, }{K minimum absolute temperature during the 24-hour period, K =
-deg C + 273.16}
+\item{Tmin_C}{minimum absolute temperature during the 24-hour period}
 
-\item{ea}{actual vapour pressure, kPa}
+\item{ea}{actual vapor pressure, kPa}
 
 \item{Rs}{measured or calculated. (Equation 35) solar radiation [MJ m-2
 day-1],}
@@ -32,7 +30,8 @@ This function calculates net outgoing longwave radiation, in
   Rnl = sigma * (Tmax_K + Tmin_K)/2 * (0.34 - 0.14 * sqrt(e_a)) * (1.35 *
   Rs/Rso - 0.35)
 
-
+  Tmax_K is Tmax_C + 273.16
+  Tmin_K is Tmin_C + 273.16
   sigma is the Stefan-Boltzmann constant, 4.903e-9 MJ/K^4/m^2/day,
   Rs/Rso relative shortwave radiation (limited to <= 1.0).
 }
@@ -44,8 +43,8 @@ N <- get_daylight_hours(lat, date)
 Ra <- get_Ra_daily(lat, date)
 Rso <- get_Rso_daily(Ra, z = 100)
 Rs <- get_Rs_daily(Ra, n, N)
-Tmax_K <- 25.1+273.16
-Tmin_K <- 19.1+273.16
+Tmax_C <- 25.1
+Tmin_C <- 19.1
 ea <- 2.1
-Rnl <- get_Rnl_daily(Ra, Tmax_K, Tmin_K, ea, Rs, Rso)
+Rnl <- get_Rnl_daily(Ra, Tmax_C, Tmin_C, ea, Rs, Rso)
 }

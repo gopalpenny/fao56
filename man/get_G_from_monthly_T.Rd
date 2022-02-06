@@ -17,17 +17,17 @@ get_G_from_monthly_T(T_month_iminus1, T_month_iplus1 = NULL, T_month_i = NULL)
 Get the ground heat flux in
 }
 \details{
-Must specify \code{T_month_iminus1} and either \code{T_month_iplus1} or \code{T_month_i}.
-\code{T_month_iplus1} is given preference. The calculation is then either
+Must specify \code{T_month_iminus1} and either \code{T_month_iplus1} or
+\code{T_month_i}. \code{T_month_iplus1} is given preference. The calculation
+is then either
 
 G = 0.07 * (T_month_iplus1 - T_month_iminus1), eq 43 FAO 56, Ch 3, or
 
 G = 0.14 * (T_month_i - T_month_iminus1) # eq 44 FAO 56, Ch 3
 
-G soil heat flux, MJ / m^2/ day
-T_month_iplus1 air temperature at month i+1, deg C
-T_month_i air temperature at month i+1, deg C
-T_month_iminus1 air temperature at month i-1, deg C
+G soil heat flux, MJ / m^2/ day T_month_iplus1 air temperature at month i+1,
+deg C T_month_i air temperature at month i+1, deg C T_month_iminus1 air
+temperature at month i-1, deg C
 }
 \examples{
 get_G_from_monthly_T(15, 18)

@@ -5,6 +5,7 @@
 #' This function takes you to the download pages for AQUASTAT CLIMATE
 #' @param lat latitude of location
 #' @param lon longitude of location
+#' @export
 #' @details This function opens a webpage to download data at the lat/lon specified
 get_aquastat_climate <- function(lat, lon) {
 
